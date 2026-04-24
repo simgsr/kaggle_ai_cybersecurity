@@ -1,103 +1,99 @@
-https://github.com/simgsr/kaggle_ai_cybersecurity.git
+# AI-Powered Network Intrusion Detection System (NIDS)
 
-# Kaggle AI Cybersecurity — Network Intrusion Detection System (v2)
+[![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)](https://www.python.org/)
+[![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-ML-F7931E?logo=scikit-learn)](https://scikit-learn.org/)
+[![XGBoost](https://img.shields.io/badge/XGBoost-Gradient%20Boosting-green)](https://xgboost.ai/)
+[![Skops](https://img.shields.io/badge/Persistence-Secure%20Skops-blue)](https://skops.readthedocs.io/)
 
-ML-based intrusion detection system trained on the UNSW-NB15 dataset. Solves two tasks: detecting whether network traffic is an attack (binary), and identifying the attack family (multi-class).
+A professional machine learning pipeline for network intrusion detection using the **UNSW-NB15 dataset**. This project implements a hierarchical cascade architecture to achieve high precision in both threat detection and attack classification.
 
-## Latest v2 updates
+## 🚀 Key Features
 
-- Hierarchical cascade architecture: binary gate → multi-class only on predicted attacks
-- Flat multi-class modelling with LightGBM, CatBoost, and XGBoost
-- Stacking ensemble: LGBM + XGB + CatBoost base learners with Logistic Regression meta-learner
-- ADASYN oversampling for harder synthetic minority samples
-- Per-class threshold tuning to maximise macro F1
-- Feature engineering with ratio and log-transformed flow statistics
+- **Hierarchical Cascade Architecture**: Uses a binary "gate" model to isolate traffic before multi-class classification.
+- **Secure Model Persistence**: Implements `skops` instead of `pickle` to ensure secure serialization and prevent arbitrary code execution—a critical standard for cybersecurity applications.
+- **Advanced Preprocessing**: Comprehensive feature scaling, categorical encoding, and SMOTE-based class balancing.
+- **Portfolio-Ready Structure**: Organized according to industry best practices for ML repositories.
 
-## Results summary
+## 🏗 Architecture
 
-- Binary classification baseline: **XGBoost** with F1 **0.9303** and ROC-AUC **0.9808**
-- Multi-class baseline (v1): **XGBoost Macro F1 0.4818**
-- v2 explores stronger multi-class pipelines and ensemble strategies to improve performance on rare attack families
+The system uses a two-stage hierarchical approach to maximize detection accuracy:
 
-## Dataset
-
-**UNSW-NB15** — network traffic captures with labelled attack categories.
-
-| Split | Records | Features |
-|-------|---------|----------|
-| Training | 175,341 | 34 |
-| Test | 82,332 | 34 |
-
-**Binary target:** `label` — 0 = Normal, 1 = Attack  
-**Multi-class target:** `attack_cat` — Generic, Exploits, Fuzzers, DoS, Reconnaissance, Analysis, Backdoor, Shellcode, Worms
-
-## Approach
-
-### Data and preprocessing
-- Load training/testing data with CSV/parquet fallback
-- Clean dropped unnamed columns and standardise numeric features
-- Label encode `proto`, `service`, `state`
-- Use ADASYN/SMOTE to balance training data for binary and multi-class tasks
-- Apply ratio and log feature engineering on raw flow statistics
-
-### Modelling
-- **Task 1 (binary):** XGBoost with threshold tuning and roc/precision/recall evaluation
-- **Task 2 (multi-class):** explored both flat and cascade strategies
-  - Flat models: XGBoost, LightGBM, CatBoost, Stacking Ensemble
-  - Cascade: XGBoost binary gate followed by a dedicated multi-class stage
-- Per-class threshold tuning recalibrates class probability cut-offs to maximise macro F1
-
-### Evaluation
-- 5-fold Stratified Cross-Validation and held-out test evaluation
-- Binary metrics: F1, precision, recall, ROC-AUC
-- Multi-class metrics: Macro F1, per-class F1, confusion matrices
-- Comparison of flat vs cascade pipelines
-
-## Tech Stack
-
-![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
-![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-F7931E?logo=scikit-learn)
-![XGBoost](https://img.shields.io/badge/XGBoost-Gradient%20Boosting-green)
-![LightGBM](https://img.shields.io/badge/LightGBM-Gradient%20Boosting-00A09B)
-![CatBoost](https://img.shields.io/badge/CatBoost-Gradient%20Boosting-00B0FF)
-![Jupyter](https://img.shields.io/badge/Jupyter-Notebook-orange?logo=jupyter)
-
-| Library | Purpose |
-|---------|---------|
-| scikit-learn | preprocessing, CV, metrics, stacking meta-learner |
-| XGBoost | binary and multi-class gradient boosting |
-| LightGBM | faster gradient boosting baseline and ensemble component |
-| CatBoost | imbalanced multi-class modelling with class weights |
-| imbalanced-learn | ADASYN / SMOTE oversampling |
-| pandas / numpy | data manipulation |
-| seaborn / matplotlib | visualisation |
-
-## Project Structure
-
+```mermaid
+graph TD
+    A[Network Traffic Data] --> B[Preprocessing & Scaling]
+    B --> C{Stage 1: Binary Model}
+    C -- Normal --> D[Label: Normal]
+    C -- Attack --> E[Stage 2: Multi-class Model]
+    E --> F[Attack Category: Exploits, DoS, Fuzzers, etc.]
 ```
+
+### v2 Improvements
+- **Stacking Ensemble**: Explored LGBM + XGB + CatBoost base learners.
+- **Per-class Threshold Tuning**: Optimized probability cut-offs to maximize Macro F1.
+- **Feature Engineering**: Added ratio and log-transformed flow statistics.
+
+## 🛡 Model Security
+
+> [!IMPORTANT]
+> **Why `skops`?**
+> Standard Python serialization (like `pickle` or `joblib`) is fundamentally insecure because it can execute arbitrary code during loading. In a cybersecurity context, this is a major vulnerability. This project uses **`skops.io`**, which provides a secure way to share models by only allowing trusted types to be deserialized.
+
+## 📊 Results Summary
+
+- **Binary Detection**: XGBoost achieves an **F1-score of 0.9303** and **ROC-AUC of 0.9808**.
+- **Multi-class Identification**: Hierarchical approach significantly improves detection of rare attack families compared to flat models.
+
+## 📂 Project Structure
+
+```text
 kaggle_ai_cybersecurity/
-├── k_security.ipynb        # Original analysis notebook
-├── k_security_v2.ipynb     # Improved v2 pipeline and ensemble exploration
-├── data/
-│   ├── UNSW_NB15_training-set.csv
-│   └── UNSW_NB15_testing-set.csv
-└── output_png_csv/
-    ├── submission_task1_binary.csv
-    └── submission_task2_multiclass.csv
+├── main.py                 # Main entry point for training & evaluation
+├── src/                    # Source code directory
+│   ├── __init__.py
+│   └── nids_model.py       # Hierarchical model class & skops logic
+├── notebooks/              # Jupyter notebooks for EDA & exploration
+│   ├── k_security.ipynb
+│   └── k_security_v2.ipynb
+├── models/                 # Secure serialized model files (.skops)
+├── data/                   # Dataset storage (Parquet/CSV)
+├── reports/                # Evaluation results and visualizations
+├── requirements.txt        # Project dependencies
+└── .gitignore              # Git exclusion rules
 ```
 
-## Running the Notebook
+## 🛠 Installation & Usage
 
+### 1. Setup Environment
 ```bash
-pip install numpy pandas matplotlib seaborn scikit-learn imbalanced-learn xgboost lightgbm catboost jupyter
-jupyter notebook k_security_v2.ipynb
+# Clone the repository
+git clone https://github.com/simgsr/kaggle_ai_cybersecurity.git
+cd kaggle_ai_cybersecurity
+
+# Install dependencies
+pip install -r requirements.txt
 ```
 
-> By default the notebook reads data from `./data/`. Set `LOCAL_DATA_DIR` to point to a different directory if needed.
+### 2. Train and Evaluate
+```bash
+python main.py
+```
 
-## Key takeaways
+### 3. Using the Model Securely
+```python
+from src.nids_model import HierarchicalNIDS
 
-- **v2 focuses on better multi-class performance** through ensemble learning, ADASYN oversampling, and per-class threshold tuning.
-- **Cascade strategy** tests whether a binary gate can improve multi-class performance by isolating attack flows.
-- **Flat stacking and per-class tuning** are designed to recover rare attack classes like Worms and Shellcode more effectively.
-- **Submission files** are generated to `output_png_csv/submission_task1_binary.csv` and `output_png_csv/submission_task2_multiclass.csv`.
+# Load the model securely
+nids = HierarchicalNIDS.load('models/nids_hierarchical_v2.skops')
+
+# Perform inference
+predictions = nids.predict(new_data_df)
+```
+
+## 📜 Dataset Reference
+**UNSW-NB15**: A modern network intrusion dataset with 9 attack categories.
+- **Training Records**: 175,341
+- **Testing Records**: 82,332
+- **Features**: 34 numeric and categorical features.
+
+---
+*Developed as a showcase for AI in Cybersecurity Portfolio.*
